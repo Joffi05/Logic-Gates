@@ -105,8 +105,14 @@ int main() {
     //printf("gates: %d\n", g_and->num_of_outs);
 
 
+    //loop vars that dont need to be reset every frame
+    int i;
+    DrawnGate* val;
+    DrawnGate* dont_unselect = NULL;
+    bool unselect_all = NULL;
     bool left_mouse_pressed = false;
     SelectedPin* selectedPin = NULL;
+
     while (!WindowShouldClose()) {
         left_mouse_pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
@@ -117,14 +123,16 @@ int main() {
 
         state.GateListActive = -1;
 
-        int i;
-        DrawnGate* val;
-        DrawnGate* clicked_gate = NULL; 
-        DrawnGate* dont_unselect = NULL;
-        bool unselect_all = false;
 
+        // clicked gate has to be reupdated every frame
+        DrawnGate* clicked_gate = NULL; 
+
+
+        //iterates all gates in the world
         vec_foreach_ptr(&world, val, i) {
-            //move if just spawned in
+            //printf("x: %d, y: %d\n", val->x, val->y);
+
+            //move the gate behind the mouse if it just spawned
             if (val->just_spawned) {
                 val->x = GetMouseX();
                 val->y = GetMouseY();
@@ -136,29 +144,30 @@ int main() {
                     vec_splice(&world, i, 1);
                 }
 
-
                 continue;
             }
 
-            //move if dragged
+            //Drag the gate if its selected and the mouse is pressed
             if (val->selected && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                 UpdateDrawnGate(val, GetMouseDelta());
             }
 
             //delete if selected and back is pressed
             if (val->selected && IsKeyPressed(KEY_BACKSPACE)) {
-                //alle selecteted dleleten noch nicht implementiert
+                // TODO alle selecteted dleleten noch nicht implementiert
                 vec_splice(&world, i, 1);
             }
             
             //select logic
             if (left_mouse_pressed) {
                 if (CheckCollisionPointRec(GetMousePosition(), *GateBoundingBox(val))) {
+                    printf("clicked gate\n");
                     clicked_gate = val;
                 }
             }
 
             if (unselect_all) {
+                printf("unselect all\n");
                 val->selected = false;
                 if (dont_unselect) {
                     dont_unselect->selected = true;
@@ -176,19 +185,22 @@ int main() {
         }
         
         //select logic
-        /* unselect_all = false;
+        unselect_all = false;
         dont_unselect = NULL;
         if (clicked_gate && !clicked_gate->selected && IsKeyUp(KEY_LEFT_SHIFT)) {
             clicked_gate->selected = true;
             dont_unselect = clicked_gate;
             unselect_all = true;
+            printf("first select\n");
         }
         else if ((clicked_gate && IsKeyDown(KEY_LEFT_SHIFT))) {
             clicked_gate->selected = true;
+            printf("second select\n");
         }
         else if (IsKeyUp(KEY_LEFT_SHIFT) && !clicked_gate && left_mouse_pressed) {
             unselect_all = true;
-        } */
+            printf("third select\n");
+        } 
 
         //drawing
         BeginDrawing();
@@ -199,7 +211,7 @@ int main() {
 
         GuiLogicLayout(&state);
 
-        //spawn new gate if clicked
+        //spawn new gate if list is clicked
         if (state.GateListActive >= 0) {
             //DrawnGate* drawn_gate = NewDrawnFromDrawn(selectables.data[state.GateListActive]);
             DrawnGate* drawn_gate = NewDrawnFromDrawnWithCoords(selectables.data[state.GateListActive], GetMouseX(), GetMouseY());

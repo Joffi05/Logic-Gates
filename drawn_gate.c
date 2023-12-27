@@ -13,13 +13,13 @@ void UpdateDrawnGate(DrawnGate* gate, Vector2 mouse_delta) {
     gate->x += mouse_delta.x;
     gate->y += mouse_delta.y;
 
-    for (int i = 1; i <= gate->gate->num_of_ins; i++) {
+/*     for (int i = 1; i <= gate->gate->num_of_ins; i++) {
         Circle* c = &gate->pins[i - 1];
         c->center.x += mouse_delta.x;
         c->center.y += mouse_delta.y;
         printf("updated\n");
     }
-
+ */
 /*     for (int i = 1 + gate->gate->num_of_ins; i <= gate->gate->num_of_outs + gate->gate->num_of_ins; i++) {
         Circle* c = &gate->pins[i - 1];
         DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
@@ -97,7 +97,7 @@ DrawnGate* NewDrawnFromDrawnWithCoords(DrawnGate* input, int x, int y) {
 
 Rectangle* GateBoundingBox(DrawnGate* gate) {
     if (gate->bounding_box == NULL) {
-        gate->bounding_box = MemAlloc(sizeof(Rectangle));
+        gate->bounding_box = malloc(sizeof(Rectangle));
     }
     gate->bounding_box->x = gate->x;
     gate->bounding_box->y = gate->y;

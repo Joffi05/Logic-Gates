@@ -1,2 +1,5 @@
 raygui/
 raylib/
+valgrind-out.txt
+game.out
+.vscode/
