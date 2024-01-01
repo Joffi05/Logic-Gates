@@ -2,6 +2,7 @@
 #include "draw.h"
 #include "circle.h"
 #include <stdio.h>
+#include "uuid/uuid.h"
 
 #define SHINE_GRAY CLITERAL(Color){ 130, 130, 130, 200 }
 
@@ -13,33 +14,33 @@ void UpdateDrawnGate(DrawnGate* gate, Vector2 mouse_delta) {
     gate->x += mouse_delta.x;
     gate->y += mouse_delta.y;
 
-/*     for (int i = 1; i <= gate->gate->num_of_ins; i++) {
-        Circle* c = &gate->pins[i - 1];
+    for (int i = 0; i < gate->gate->num_of_ins + gate->gate->num_of_outs; i++) {
+        Circle* c = &gate->pins[i];
         c->center.x += mouse_delta.x;
         c->center.y += mouse_delta.y;
-        printf("updated\n");
     }
- */
-/*     for (int i = 1 + gate->gate->num_of_ins; i <= gate->gate->num_of_outs + gate->gate->num_of_ins; i++) {
-        Circle* c = &gate->pins[i - 1];
-        DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
-    } */
+
+    printf("Circle center: %f, %f\n", gate->pins[0].center.x, gate->pins[0].center.y);
 }
 
+//TODO FIXEN
 DrawnGate* NewDrawnGate(Gate* gate, Color color, const char* name, int x, int y) {
-    //alloc size + size for input and output circles
-    DrawnGate* ptr = malloc(sizeof(DrawnGate) + (gate->num_of_ins + gate->num_of_outs) * sizeof(Circle));
+    DrawnGate* ptr = malloc(sizeof(DrawnGate));
+    uuid_generate_random(ptr->uuid);    
     ptr->color = color;
     ptr->gate = gate;
-    ptr->name = name;
+    //Allocate string again
+    ptr->name = strdup(name);
     ptr->just_spawned = false;
     ptr->selected = false;
     ptr->x = x;
     ptr->y = y;
     ptr->bounding_box = NULL;
-    memset(ptr + sizeof(DrawnGate), 0, (gate->num_of_ins + gate->num_of_outs) * sizeof(Circle));
 
-    for (int i = 1; i <= gate->num_of_ins; i++) {
+    //alloc input and output circles
+    ptr->pins = malloc((gate->num_of_ins + gate->num_of_outs) * sizeof(Circle));
+
+    for (int i = 1; i <= gate->num_of_ins + 1; i++) {
         Circle* c = &ptr->pins[i - 1];
         c->center.x = (float)x;
         c->center.y = (float)(y + CalculateHeight(gate) / (gate->num_of_ins + 1) * i);
@@ -55,6 +56,18 @@ DrawnGate* NewDrawnGate(Gate* gate, Color color, const char* name, int x, int y)
 
     return ptr;
 }
+
+
+void FreeDrawnGate(DrawnGate* gate) {
+    FreeGate(gate->gate);
+    free(gate->name);
+    if (gate->bounding_box != NULL)
+        free(gate->bounding_box);
+    free(gate->pins);
+    free(gate);
+    gate = NULL;
+} 
+
 
 /* int InputsClicked(DrawnGate* gate) {
     Vector2 mouse_pos = GetMousePosition();

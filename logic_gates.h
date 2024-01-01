@@ -4,7 +4,7 @@
 #include "vecs.h"
  
 typedef struct Gate {
-    gate_vec_t* to_update;
+    gate_ptr_vec_t* to_update;
     // inputs points to the outputs of other gates, so it's a 2d array
     bool** inputs;
     // outputs is stored in the gate to which other gates refer to as inputs so its a 1d array

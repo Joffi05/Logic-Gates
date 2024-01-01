@@ -120,7 +120,7 @@ GuiLogicLayoutState InitGuiLogicLayout(void)
     state.NewGateActive = true;
     state.NameEditMode = false;
     strcpy(state.NameText, "Name");
-    strcpy(state.GateListString, "And;Or;Not");
+    strcpy(state.GateListString, "Button;And;Or;Not");
     state.ColorValue = (Color){ 0, 0, 0, 0 };
     state.CalculateTableChecked = false;
     state.DonePressed = false;

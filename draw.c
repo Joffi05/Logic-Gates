@@ -45,15 +45,11 @@ void DrawGateFromDrawn(DrawnGate* gate) {
         DrawRectangleLines(gate->x - 10, gate->y - 10, GATE_WIDTH + 20, CalculateHeight(gate->gate) + 20, BLACK);
     }
 
-    for (int i = 1; i <= gate->gate->num_of_ins; i++) {
-        Circle* c = &gate->pins[i - 1];
-        DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
-    }
-
-/*     for (int i = 1 + gate->gate->num_of_ins; i <= gate->gate->num_of_outs + gate->gate->num_of_ins; i++) {
-        Circle* c = &gate->pins[i - 1];
-        DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
-    } */
 
     DrawGate(gate->gate, gate->x, gate->y, color, gate->name);
+    
+    for (int i = 0; i <= gate->gate->num_of_outs + gate->gate->num_of_ins; i++) {
+        Circle* c = &gate->pins[i];
+        DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
+    }
 }

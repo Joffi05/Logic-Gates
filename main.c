@@ -7,6 +7,7 @@
 #include "vecs.h"
 #include "vec.h"
 #include "drawn_gate.h"
+#include "game.h"
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui/src/raygui.h"
@@ -14,10 +15,13 @@
 #define GUI_LOGIC_LAYOUT_IMPLEMENTATION
 #include "logic_layout.h"
 
+
+//experimental:
 typedef struct SelectedPin {
     Circle* pin;
     DrawnGate* gate;
 } SelectedPin;
+// ----------------
 
 
 void ToggleFullScreenWindow(int windowHeight, int windowWidth) {
@@ -42,11 +46,31 @@ void InitResizable(int width, int height, const char *title) {
 }
 
 void and(Gate* gate) {
-    gate->outputs[0] = gate->inputs[0] && gate->inputs[1];
+    // Check if either input is NULL
+    if (gate->inputs[0] == NULL || gate->inputs[1] == NULL) {
+        printf("Null input detected in AND gate\n");
+        
+        // Set output to false if any input is NULL
+        gate->outputs[0] = false;
+        return;
+    }
+
+    // Dereference the inputs and perform the AND operation
+    gate->outputs[0] = *(gate->inputs[0]) && *(gate->inputs[1]);
 }
 
 void or(Gate* gate) {
-    gate->outputs[0] = gate->inputs[0] || gate->inputs[1];
+    // Check if either input is NULL
+    if (gate->inputs[0] == NULL || gate->inputs[1] == NULL) {
+        printf("Null input detected in OR gate\n");
+        
+        // Set output to false if any input is NULL
+        gate->outputs[0] = false;
+        return;
+    }
+
+    // Dereference the inputs and perform the OR operation
+    gate->outputs[0] = *(gate->inputs[0]) || *(gate->inputs[1]);
 }
 
 void truthy(Gate* gate) {
@@ -59,6 +83,10 @@ void falsy(Gate* gate) {
 
 void not(Gate* gate) {
     gate->outputs[0] = !gate->inputs[0];
+}
+
+void button(Gate* gate) {
+    return;
 }
 
 int main() {
@@ -77,33 +105,37 @@ int main() {
     //init world
     drawn_gate_vec_t world;
     vec_init(&world);
+
+    //init to delete vec
+    drawn_gate_ptr_vec_t to_delete;
+    vec_init(&to_delete);
     
     drawn_gate_ptr_vec_t selectables;
     vec_init(&selectables);
 
-    //and is index 0
-    Gate* g_and = NewGate(2, 1);
-    SetFunction(g_and, *and);
+     //button is index 0
+    Gate* g_button = NewGate(0, 1);
+    SetFunction(g_button, button);
+    g_button->out(g_button);
+    vec_push(&selectables, NewDrawnGate(g_button, YELLOW, &"Button", 0, 0));
+ 
+    //and is index 1
+    Gate* g_and = NewGate(10, 1);
+    SetFunction(g_and, and);
     g_and->out(g_and);
-    vec_push(&selectables, NewDrawnGate(g_and, GREEN, "And", 0, 0));
+    vec_push(&selectables, NewDrawnGate(g_and, GREEN, &"And", 0, 0));
 
-
-    //or is index 1
+    //or is index 2
     Gate* g_or = NewGate(2, 1);
-    SetFunction(g_or, *or);
+    SetFunction(g_or, or);
     g_or->out(g_or);
-    vec_push(&selectables, NewDrawnGate(g_or, BLUE, "Or", 0, 0));
+    vec_push(&selectables, NewDrawnGate(g_or, BLUE, &"Or", 0, 0));
 
-
-    //not is index 2
+    //not is index 3
     Gate* g_not = NewGate(1, 1);
-    SetFunction(g_not, *not);
+    SetFunction(g_not, not);
     g_not->out(g_not);
-    vec_push(&selectables, NewDrawnGate(g_not, RED, "Not", 0, 0));
-
-
-    //printf("gates: %d\n", g_and->num_of_outs);
-
+    vec_push(&selectables, NewDrawnGate(g_not, RED, &"Not", 0, 0));
 
     //loop vars that dont need to be reset every frame
     int i;
@@ -121,58 +153,25 @@ int main() {
             ToggleFullScreenWindow(startHeight, startWidth);
  		}
 
-        state.GateListActive = -1;
-
-
         // clicked gate has to be reupdated every frame
         DrawnGate* clicked_gate = NULL; 
-
+        state.GateListActive = -1;
 
         //iterates all gates in the world
         vec_foreach_ptr(&world, val, i) {
-            //printf("x: %d, y: %d\n", val->x, val->y);
-
             //move the gate behind the mouse if it just spawned
             if (val->just_spawned) {
-                val->x = GetMouseX();
-                val->y = GetMouseY();
-
                 if (left_mouse_pressed)
                     val->just_spawned = false;
-                
-                if (IsKeyPressed(KEY_BACKSPACE)) {
-                    vec_splice(&world, i, 1);
-                }
-
-                continue;
             }
 
-            //Drag the gate if its selected and the mouse is pressed
-            if (val->selected && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                UpdateDrawnGate(val, GetMouseDelta());
-            }
+            //Drag the gate if its selected and the mouse is pressed or if it just spawned
+            handleDragging(val);
 
             //delete if selected and back is pressed
-            if (val->selected && IsKeyPressed(KEY_BACKSPACE)) {
-                // TODO alle selecteted dleleten noch nicht implementiert
-                vec_splice(&world, i, 1);
-            }
-            
+            handleDeletion(&to_delete, val);            
             //select logic
-            if (left_mouse_pressed) {
-                if (CheckCollisionPointRec(GetMousePosition(), *GateBoundingBox(val))) {
-                    printf("clicked gate\n");
-                    clicked_gate = val;
-                }
-            }
-
-            if (unselect_all) {
-                printf("unselect all\n");
-                val->selected = false;
-                if (dont_unselect) {
-                    dont_unselect->selected = true;
-                }
-            }
+            handleSelection(left_mouse_pressed, unselect_all, &dont_unselect, &val, &clicked_gate);
 
             //select pin logic
             /* int inputs_clicked = InputsClicked(val);
@@ -183,24 +182,35 @@ int main() {
                 selectedPin->pin = c;
             }  */
         }
+
+        //printf("Length: %d\n", world.length);
+        //printf("To delete: %d\n", to_delete.length);
         
-        //select logic
-        unselect_all = false;
-        dont_unselect = NULL;
-        if (clicked_gate && !clicked_gate->selected && IsKeyUp(KEY_LEFT_SHIFT)) {
-            clicked_gate->selected = true;
-            dont_unselect = clicked_gate;
-            unselect_all = true;
-            printf("first select\n");
+        int index;
+        //delete gates that are marked for deletion
+        //Problem ist, dass wenn ein element gelöscht wird sich der vec verschiebt, und dann nur ein element gelöscht wird
+        vec_foreach_rev(&to_delete, val, i) {
+            printf("Delete i: %d\n", i);
+
+            for (int i = 0; i < world.length; i++) {
+                if (world.data[i].uuid == val->uuid) {
+                    //FreeDrawnGate(&world.data[i]);
+                    vec_splice(&world, i, 1);
+                    vec_compact(&world);
+                    break;
+                }
+            }
         }
-        else if ((clicked_gate && IsKeyDown(KEY_LEFT_SHIFT))) {
-            clicked_gate->selected = true;
-            printf("second select\n");
-        }
-        else if (IsKeyUp(KEY_LEFT_SHIFT) && !clicked_gate && left_mouse_pressed) {
-            unselect_all = true;
-            printf("third select\n");
-        } 
+
+        vec_clear(&to_delete);
+
+/*         FreeDrawnGate(gate);
+        vec_splice(world, i, 1);
+        gate = NULL;
+ */
+
+        //unselect logic
+        handleUnselect(&clicked_gate, &unselect_all, &dont_unselect, left_mouse_pressed);
 
         //drawing
         BeginDrawing();
@@ -213,6 +223,7 @@ int main() {
 
         //spawn new gate if list is clicked
         if (state.GateListActive >= 0) {
+            //here is spawn gate logic
             //DrawnGate* drawn_gate = NewDrawnFromDrawn(selectables.data[state.GateListActive]);
             DrawnGate* drawn_gate = NewDrawnFromDrawnWithCoords(selectables.data[state.GateListActive], GetMouseX(), GetMouseY());
             drawn_gate->just_spawned = true;
@@ -224,9 +235,20 @@ int main() {
         EndDrawing();
     }
 
+
+    vec_foreach_ptr(&world, val, i) {
+        FreeDrawnGate(val);
+        printf("Freeing gate\n");
+    }
+    vec_foreach(&selectables, val, i) {
+        FreeDrawnGate(val);
+        printf("Freeing gate\n");
+    }
+
     vec_deinit(&world);
     vec_deinit(&selectables);    
 
     CloseWindow();
+    exit(0);
     return 0;
 }

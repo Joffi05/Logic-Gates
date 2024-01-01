@@ -135,6 +135,7 @@
         --(iter))
 
 
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 #define vec_foreach_ptr(v, var, iter)\
   if  ( (v)->length > 0 )\
   for ( (iter) = 0;\
@@ -147,8 +148,6 @@
   for ( (iter) = (v)->length - 1;\
         (iter) >= 0 && (((var) = &(v)->data[(iter)]), 1);\
         --(iter))
-
-
 
 int vec_expand_(char **data, int *length, int *capacity, int memsz);
 int vec_reserve_(char **data, int *length, int *capacity, int memsz, int n);

@@ -5,7 +5,9 @@
         "raygui.h": "c",
         "raylib.h": "c",
         "logic_layout.h": "c",
-        "vecs.h": "c"
+        "vecs.h": "c",
+        "stddef.h": "c",
+        "circle.h": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
