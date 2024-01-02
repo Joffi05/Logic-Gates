@@ -4,31 +4,64 @@
 
 #define SHINE_GRAY CLITERAL(Color){ 130, 130, 130, 200 }
 
-const int GATE_WIDTH = 100;
-const int BORDER_WIDTH = 10;
+
+// SECTION FOR SPECIAL GATES
+
+void DrawButton(DrawnGate* gate) {
+    Rectangle inner = (Rectangle) {.x = gate->bounding_box->x + MY_BORDER_WIDTH, .y = gate->bounding_box->y + MY_BORDER_WIDTH, .width = gate->bounding_box->width - 2 * MY_BORDER_WIDTH, .height = gate->bounding_box->height - 2 * MY_BORDER_WIDTH};
+    
+    if (gate->gate->outputs[0]) {
+        DrawRectangleRounded(inner, 0.1, 1, RED);
+    }
+    else {
+        DrawRectangleRounded(inner, 0.1, 1, GREEN);
+    }
+}
+
+void DrawLamp(DrawnGate* gate) {
+    Rectangle inner = (Rectangle) {.x = gate->bounding_box->x + MY_BORDER_WIDTH, .y = gate->bounding_box->y + MY_BORDER_WIDTH, .width = gate->bounding_box->width - 2 * MY_BORDER_WIDTH, .height = gate->bounding_box->height - 2 * MY_BORDER_WIDTH};
+    
+    if (gate->gate->inputs[0]) {
+        DrawRectangleRounded(inner, 0.1, 1, RED);
+    }
+    else {
+        DrawRectangleRounded(inner, 0.1, 1, GREEN);
+    }
+}
+
+
+// END SECTION FOR SPECIAL GATES
 
 
 int CalculateHeight(Gate* gate) {
     int in_or_out_larger = gate->num_of_ins > gate->num_of_outs ? gate->num_of_ins : gate->num_of_outs;
-    int gateHeight = in_or_out_larger * 24;
+    int gateHeight = in_or_out_larger * 30;
     if (in_or_out_larger == 1) {
         gateHeight = 48;
     }
     return gateHeight;
 }
 
-//Refactor
-void DrawGate(Gate* gate, int x, int y, Color color, const char* name) {
-    int gateHeight = CalculateHeight(gate);
-
-    Rectangle outer = (Rectangle) {.x = x, .y = y, .width = GATE_WIDTH, .height = gateHeight};
+void DrawBox(DrawnGate* gate, Color color) {
+    Rectangle outer = (Rectangle) {.x = gate->bounding_box->x, .y = gate->bounding_box->y, .width = gate->bounding_box->width, .height = gate->bounding_box->height};
     DrawRectangleRounded(outer, 0.2, 1, color);
+    DrawRectangle(gate->bounding_box->x, gate->bounding_box->y, gate->bounding_box->width, gate->bounding_box->height, color);
+}
 
-    DrawRectangle(x, y, GATE_WIDTH, gateHeight, color);
-
-    //muss fertig gemacht werden, schrift soll zentriert
+void DrawGateName(DrawnGate *gate)
+{
     int font_size = 30;
-    DrawText(name, x + BORDER_WIDTH + (GATE_WIDTH - BORDER_WIDTH) / 2 - font_size, y + BORDER_WIDTH, font_size, BLACK);
+    int text_height = MeasureText(gate->name, font_size);
+    int y = gate->bounding_box->y + (gate->bounding_box->height - (text_height / 2)) / 2;
+    DrawText(gate->name, gate->bounding_box->x + MY_BORDER_WIDTH + (gate->bounding_box->width - MY_BORDER_WIDTH) / 2 - font_size, y, font_size, BLACK);
+}
+
+void DrawInOutputs(DrawnGate *gate) {
+    //Print number of inputs and outputs
+    for (int i = 0; i < gate->gate->num_of_outs + gate->gate->num_of_ins; i++) {
+        Circle *c = &gate->pins[i];
+        DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
+    }
 }
 
 void DrawGateFromDrawn(DrawnGate* gate) {
@@ -42,14 +75,24 @@ void DrawGateFromDrawn(DrawnGate* gate) {
 
     //draw gate outline if selected
     if (gate->selected) {
-        DrawRectangleLines(gate->x - 10, gate->y - 10, GATE_WIDTH + 20, CalculateHeight(gate->gate) + 20, BLACK);
+        DrawRectangleLines(gate->bounding_box->x - 10, gate->bounding_box->y - 10, gate->bounding_box->width + 20, gate->bounding_box->height + 20, BLACK);
     }
 
+    //draw body
+    DrawBox(gate, color);
 
-    DrawGate(gate->gate, gate->x, gate->y, color, gate->name);
+    //If gate is Button, dont draw name but red or green button
+    if (strcmp(gate->name, "Button") == 0) {
+        DrawButton(gate);
+    }
+    else if (strcmp(gate->name, "Lamp") == 0) {
+        DrawLamp(gate);
+    }
     
-    for (int i = 0; i <= gate->gate->num_of_outs + gate->gate->num_of_ins; i++) {
-        Circle* c = &gate->pins[i];
-        DrawCircle(c->center.x, c->center.y, c->radius, BLACK);
+    else {
+        DrawGateName(gate);
     }
+
+    //draw in and outputs
+    DrawInOutputs(gate);
 }

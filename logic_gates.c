@@ -5,15 +5,30 @@
 #include "logic_gates.h"
 #include "vecs.h"
 
+
+void FreeGate(Gate* gate) {
+    if (gate == NULL) {
+        return; 
+    }
+    // Free each input pointer
+    for (int i = 0; i < gate->num_of_ins; i++) {
+        free(gate->inputs[i]);
+    }
+    free(gate->inputs);
+    free(gate->outputs);
+    vec_clear(gate->to_update);
+    vec_deinit(gate->to_update); 
+    free(gate->to_update);
+    free(gate);
+}
+
 // Erstellt ein neues Gate mit i_ins Eingängen und i_outs Ausgängen
 Gate* NewGate(int i_ins, int i_outs) {
     Gate* gate = malloc(sizeof(Gate));
     gate->num_of_ins = i_ins;
     gate->num_of_outs = i_outs;
 
-    // Reserviert Speicher für die Zeiger
     gate->inputs = malloc(sizeof(bool*) * gate->num_of_ins);
-    // Reserviert Speicher für die bool-Werte und initialisiert sie mit 0
     for (int i = 0; i < gate->num_of_ins; i++) {
         gate->inputs[i] = malloc(sizeof(bool));
         *(gate->inputs[i]) = false;
@@ -127,23 +142,4 @@ void ConnectGates(Gate* gate_o, Gate* gate_i, int output_i, int input_i) {
 
     gate_i->inputs[input_i] = &(gate_o->outputs[output_i]);
     vec_push(gate_o->to_update, gate_i);
-}
-
-void FreeGate(Gate* gate) {
-    if (gate == NULL) {
-        return; // If the gate pointer is NULL, there's nothing to free
-    }
-    // Free each input pointer
-    for (int i = 0; i < gate->num_of_ins; i++) {
-        free(gate->inputs[i]);
-    }
-    // Free the array of input pointers
-    free(gate->inputs);
-    // Free the outputs array
-    free(gate->outputs);
-    // Deinitialize and free the to_update vector
-    vec_deinit(gate->to_update); // If vec_deinit frees the data, this is needed
-    free(gate->to_update);
-    // Finally, free the gate itself
-    free(gate);
 }

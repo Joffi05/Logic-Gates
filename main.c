@@ -89,6 +89,10 @@ void button(Gate* gate) {
     return;
 }
 
+void lamp(Gate* gate) {
+    return;
+}
+
 int main() {
     //init window
     int startWidth = 1000;
@@ -117,25 +121,35 @@ int main() {
     Gate* g_button = NewGate(0, 1);
     SetFunction(g_button, button);
     g_button->out(g_button);
-    vec_push(&selectables, NewDrawnGate(g_button, YELLOW, &"Button", 0, 0));
+    vec_push(&selectables, NewDrawnGate(g_button, DARKGRAY, "Button", 0, 0));
+    AddLogicGateToList(&state, "Button;");
  
+    Gate* g_lamp = NewGate(1, 0);
+    SetFunction(g_lamp, lamp);
+    g_lamp->out(g_lamp);
+    vec_push(&selectables, NewDrawnGate(g_lamp, GRAY, "Lamp", 0, 0));
+    AddLogicGateToList(&state, "Lamp;");
+
     //and is index 1
-    Gate* g_and = NewGate(10, 1);
+    Gate* g_and = NewGate(2, 1);
     SetFunction(g_and, and);
     g_and->out(g_and);
-    vec_push(&selectables, NewDrawnGate(g_and, GREEN, &"And", 0, 0));
+    vec_push(&selectables, NewDrawnGate(g_and, GREEN, "And", 0, 0));
+    AddLogicGateToList(&state, "And;");
 
     //or is index 2
     Gate* g_or = NewGate(2, 1);
     SetFunction(g_or, or);
     g_or->out(g_or);
-    vec_push(&selectables, NewDrawnGate(g_or, BLUE, &"Or", 0, 0));
+    vec_push(&selectables, NewDrawnGate(g_or, BLUE, "Or", 0, 0));
+    AddLogicGateToList(&state, "Or;");
 
     //not is index 3
     Gate* g_not = NewGate(1, 1);
     SetFunction(g_not, not);
     g_not->out(g_not);
-    vec_push(&selectables, NewDrawnGate(g_not, RED, &"Not", 0, 0));
+    vec_push(&selectables, NewDrawnGate(g_not, RED, "Not", 0, 0));
+    AddLogicGateToList(&state, "Not");
 
     //loop vars that dont need to be reset every frame
     int i;
@@ -183,6 +197,10 @@ int main() {
             }  */
         }
 
+        if (clicked_gate != NULL && strcmp(clicked_gate->name, "Button") == 0) {
+            clicked_gate->gate->outputs[0] = !clicked_gate->gate->outputs[0];
+        }
+
         //printf("Length: %d\n", world.length);
         //printf("To delete: %d\n", to_delete.length);
         
@@ -190,8 +208,6 @@ int main() {
         //delete gates that are marked for deletion
         //Problem ist, dass wenn ein element gelöscht wird sich der vec verschiebt, und dann nur ein element gelöscht wird
         vec_foreach_rev(&to_delete, val, i) {
-            printf("Delete i: %d\n", i);
-
             for (int i = 0; i < world.length; i++) {
                 if (world.data[i].uuid == val->uuid) {
                     //FreeDrawnGate(&world.data[i]);
@@ -238,11 +254,9 @@ int main() {
 
     vec_foreach_ptr(&world, val, i) {
         FreeDrawnGate(val);
-        printf("Freeing gate\n");
     }
     vec_foreach(&selectables, val, i) {
         FreeDrawnGate(val);
-        printf("Freeing gate\n");
     }
 
     vec_deinit(&world);

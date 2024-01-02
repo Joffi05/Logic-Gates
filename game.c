@@ -13,14 +13,13 @@ void handleDragging(DrawnGate* gate) {
 
 void handleDeletion(drawn_gate_ptr_vec_t* to_delete, DrawnGate* gate) {
     if (gate->selected && IsKeyPressed(KEY_BACKSPACE)) {
-        printf("Deleting gate: %s\n", gate->name);
         vec_push(to_delete, gate);
     }
 }
 
 void handleSelection(bool left_mouse_pressed, bool unselect_all, DrawnGate** dont_unselect, DrawnGate** val, DrawnGate** clicked_gate) {
     if (left_mouse_pressed) {
-        if (CheckCollisionPointRec(GetMousePosition(), *GateBoundingBox(*val))) {
+        if (CheckCollisionPointRec(GetMousePosition(), *(*val)->bounding_box)) {
             *clicked_gate = *val;
         }
     }

@@ -22,6 +22,7 @@ valgrind-long: debug
 
 debug: $(SRC)
 	gcc -o game.out -fsanitize=address $^ -g $(CFLAGS) $(LIBS)
+	./game.out
 
 gdb: debug
 	gdb ./game.out core

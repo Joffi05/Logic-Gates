@@ -101,6 +101,8 @@ void GuiLogicLayout(GuiLogicLayoutState *state);
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
+
+// Add logic gate to selectable list that is drawn in the gui
 void AddLogicGateToList(GuiLogicLayoutState *state, const char* gate) {
     strcat(state->GateListString, gate);
 }
@@ -120,7 +122,8 @@ GuiLogicLayoutState InitGuiLogicLayout(void)
     state.NewGateActive = true;
     state.NameEditMode = false;
     strcpy(state.NameText, "Name");
-    strcpy(state.GateListString, "Button;And;Or;Not");
+    // TODO Hier muss das dynamisch geregelt werden
+    strcpy(state.GateListString, "");
     state.ColorValue = (Color){ 0, 0, 0, 0 };
     state.CalculateTableChecked = false;
     state.DonePressed = false;

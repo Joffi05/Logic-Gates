@@ -15,9 +15,7 @@ typedef struct DrawnGate {
     uuid_t uuid;
     Gate* gate;
     Color color;
-    const char* name;
-    int x;
-    int y;
+    char* name;
     bool selected;
     bool just_spawned;
     Rectangle* bounding_box;
@@ -28,7 +26,6 @@ DrawnGate* NewSpawnedDrawnGate(Gate* gate, Color color, const char* name, int x,
 DrawnGate* NewDrawnGate(Gate* gate, Color color, const char* name, int x, int y);
 DrawnGate* NewDrawnFromDrawn(DrawnGate* input);
 DrawnGate* NewDrawnFromDrawnWithCoords(DrawnGate* input, int x, int y);
-Rectangle* GateBoundingBox(DrawnGate* gate);
 void FreeDrawnGate(DrawnGate* gate);
 
 
